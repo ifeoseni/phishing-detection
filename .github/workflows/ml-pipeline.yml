@@ -1,0 +1,41 @@
+name: Scheduled ML Pipeline
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # Every day at 3:00 AM UTC
+  workflow_dispatch:      # Manual trigger option
+
+jobs:
+  phishing-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Extract Features
+        run: python extract_features.py
+
+      - name: Train Model
+        run: python train_model.py
+
+      # Optional: Commit updated files back to the repo
+      - name: Commit and Push Output
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add output/*
+          git commit -m "Update extracted features and model - $(date)"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
